@@ -201,6 +201,21 @@ def backup_existing_static_pem(lock_name: str) -> None:
         logger.debug(f"Backed up {bf}")
 
 
+def _require_executable(name: str) -> None:
+    if shutil.which(name):
+        return
+    logger.error(f"Missing dependency: {name}")
+    raise typer.Exit(127)
+
+
+def _go_bin_dir() -> Path:
+    res = subprocess.run(["go", "env", "GOPATH"], text=True, capture_output=True)
+    if res.returncode != 0:
+        logger.error(f"Failed to read GOPATH: {res.stderr.strip()}")
+        raise typer.Exit(res.returncode)
+    return Path(res.stdout.strip()) / "bin"
+
+
 # ── Commands ─────────────────────────────────────────────────────────────────
 console = Console()
 
@@ -243,6 +258,43 @@ app = typer.Typer(
     add_completion=False,
     help="Timelock keypad subset via drand/tlock with pinned mainnet chain",
 )
+
+
+@app.command()
+def setup() -> None:
+    """
+    Installs tle via Go and prepares local secrets directories.
+    """
+    logger.info("[setup] Checking Go toolchain...")
+    _require_executable("go")
+
+    logger.info("[setup] Installing tle (drand/tlock) via 'go install'...")
+    go_install_pkg = "github.com/drand/tlock/cmd/tle@latest"
+    res = subprocess.run(["go", "install", go_install_pkg], text=True, capture_output=True)
+    if res.returncode != 0:
+        logger.error(f"[setup] go install failed ({res.returncode}): {res.stderr.strip()}")
+        raise typer.Exit(res.returncode)
+
+    if shutil.which("tle"):
+        logger.info("[setup] 'tle' is available in PATH.")
+    else:
+        go_bin = _go_bin_dir()
+        candidate = go_bin / "tle"
+        if candidate.is_file():
+            console.print(
+                "[setup] 'tle' installed but not in PATH.\n"
+                "[setup] Add this to your shell profile:\n"
+                f"  export PATH=\"{go_bin}:$PATH\""
+            )
+        else:
+            logger.error("[setup] Could not find 'tle' after install. Check your Go environment.")
+            raise typer.Exit(1)
+
+    logger.info("[setup] Creating folders...")
+    for directory in (BACKUPS_DIR, LOCKED_DIR):
+        directory.mkdir(parents=True, exist_ok=True)
+
+    logger.info("[setup] Done.")
 
 
 @app.command()
