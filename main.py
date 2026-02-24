@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Minimal timelock CLI for Master Lock 5423D-style keypad subsets (order-agnostic).
+Minimal timepin-lockbox CLI for Master Lock 5423D-style keypad subsets (order-agnostic).
 
 - N-digit pin `[0-9]`
 - Rotation: previous pem is copied to lockbox-YYYYMMDDTHHMMSSZ.tle.pem
@@ -241,7 +241,7 @@ def step_decode(pin: str) -> None:
 
 app = typer.Typer(
     add_completion=False,
-    help="Timelock keypad subset via drand/tlock with pinned mainnet chain",
+    help="timepin-lockbox keypad subset via drand/tlock with pinned mainnet chain",
 )
 
 

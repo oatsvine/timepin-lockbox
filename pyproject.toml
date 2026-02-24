@@ -1,5 +1,5 @@
 [project]
-name = "timelock"
+name = "timepin-lockbox"
 version = "0.1.0"
 description = "Time-delayed keypad PIN lock/unlock CLI using drand tlock encryption"
 readme = "README.md"

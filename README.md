@@ -1,4 +1,4 @@
-# timelock
+# timepin-lockbox
 
 Time-delayed PIN lock/unlock CLI backed by `drand` and the `tle` tool from `github.com/drand/tlock`.
 

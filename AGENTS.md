@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This file defines contribution rules for humans and coding agents in this repository.
+This file defines contribution rules for humans and coding agents in the `timepin-lockbox` repository.
 
 ## Scope
 
