@@ -23,10 +23,10 @@ This project is managed with the `uv` toolchain.
 ```bash
 # from the project directory
 uv sync
-./setup.sh
+uv run python main.py setup
 ```
 
-If `tle` is not on `PATH` after setup, add Go's bin directory as prompted by `setup.sh`.
+If `tle` is not on `PATH` after setup, add Go's bin directory as prompted by the command output.
 
 ## Usage
 
@@ -51,12 +51,6 @@ uv sync --group dev
 # type check
 uv run pyright
 ```
-
-## Repository layout
-
-- `main.py`: Typer CLI implementation.
-- `setup.sh`: installs `tle` and prepares local directories.
-- `secrets/`: runtime lock and backup artifacts.
 
 ## Notes
 

@@ -9,7 +9,6 @@ These instructions apply to the full repository rooted at this directory.
 ## Toolchain (required)
 
 - Use `uv` for Python environment, dependency, and command execution tasks.
-- Do not introduce `pip`, `pip-tools`, Poetry, Pipenv, or Conda workflows.
 - Use `uv sync` to materialize environments.
 - Use `uv run ...` for project commands.
 

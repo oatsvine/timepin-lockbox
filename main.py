@@ -201,21 +201,6 @@ def backup_existing_static_pem(lock_name: str) -> None:
         logger.debug(f"Backed up {bf}")
 
 
-def _require_executable(name: str) -> None:
-    if shutil.which(name):
-        return
-    logger.error(f"Missing dependency: {name}")
-    raise typer.Exit(127)
-
-
-def _go_bin_dir() -> Path:
-    res = subprocess.run(["go", "env", "GOPATH"], text=True, capture_output=True)
-    if res.returncode != 0:
-        logger.error(f"Failed to read GOPATH: {res.stderr.strip()}")
-        raise typer.Exit(res.returncode)
-    return Path(res.stdout.strip()) / "bin"
-
-
 # ── Commands ─────────────────────────────────────────────────────────────────
 console = Console()
 
@@ -266,35 +251,53 @@ def setup() -> None:
     Installs tle via Go and prepares local secrets directories.
     """
     logger.info("[setup] Checking Go toolchain...")
-    _require_executable("go")
+    if not shutil.which("go"):
+        logger.error("Missing dependency: go")
+        raise typer.Exit(127)
 
     logger.info("[setup] Installing tle (drand/tlock) via 'go install'...")
     go_install_pkg = "github.com/drand/tlock/cmd/tle@latest"
-    res = subprocess.run(["go", "install", go_install_pkg], text=True, capture_output=True)
+    res = subprocess.run(
+        ["go", "install", go_install_pkg], text=True, capture_output=True
+    )
     if res.returncode != 0:
-        logger.error(f"[setup] go install failed ({res.returncode}): {res.stderr.strip()}")
+        logger.error(
+            f"[setup] go install failed ({res.returncode}): {res.stderr.strip()}"
+        )
         raise typer.Exit(res.returncode)
 
     if shutil.which("tle"):
         logger.info("[setup] 'tle' is available in PATH.")
     else:
-        go_bin = _go_bin_dir()
+        gopath_result = subprocess.run(
+            ["go", "env", "GOPATH"], text=True, capture_output=True
+        )
+        if gopath_result.returncode != 0:
+            logger.error(f"Failed to read GOPATH: {gopath_result.stderr.strip()}")
+            raise typer.Exit(gopath_result.returncode)
+        go_bin = Path(gopath_result.stdout.strip()) / "bin"
         candidate = go_bin / "tle"
         if candidate.is_file():
             console.print(
-                "[setup] 'tle' installed but not in PATH.\n"
-                "[setup] Add this to your shell profile:\n"
-                f"  export PATH=\"{go_bin}:$PATH\""
+                "Important: 'tle' installed but not in PATH.\n"
+                "Add this to your shell profile:\n"
+                f'  export PATH="{go_bin}:$PATH"\n\n'
             )
         else:
-            logger.error("[setup] Could not find 'tle' after install. Check your Go environment.")
+            logger.error(
+                "[setup] Could not find 'tle' after install. Check your Go environment."
+            )
             raise typer.Exit(1)
 
     logger.info("[setup] Creating folders...")
     for directory in (BACKUPS_DIR, LOCKED_DIR):
         directory.mkdir(parents=True, exist_ok=True)
 
-    logger.info("[setup] Done.")
+    console.print(
+        f"Created secrets directories → {SECRETS_DIR}\n"
+        f"  - Locked ciphers: {LOCKED_DIR.relative_to(SECRETS_DIR)}\n"
+        f"  - Backups: {BACKUPS_DIR.relative_to(SECRETS_DIR)}\n"
+    )
 
 
 @app.command()
